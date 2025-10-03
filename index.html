@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dentistry Practical – 30-second feedback</title>
+<meta name="description" content="Quick, anonymous feedback after dentistry practicals." />
+<style>
+  :root { --bg:#0b0f14; --card:#121821; --muted:#7d8b9b; --fg:#e8eef6; --accent:#4ba3ff; --ok:#38b000; --warn:#ffb703; }
+  *{box-sizing:border-box} html,body{height:100%}
+  body{margin:0;background:linear-gradient(180deg,#0b0f14,#0e141c);color:var(--fg);
+       font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;
+       display:flex;align-items:center;justify-content:center;padding:14px}
+  .wrap{width:min(800px,96vw);}
+  .card{background:var(--card);border:1px solid #1f2733;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.35);padding:22px}
+  h1{font-size:1.35rem;margin:0 0 6px 0}
+  p.lead{color:var(--muted);margin:0 0 14px}
+  form{display:grid;gap:14px;margin-top:6px}
+  fieldset{border:1px dashed #253042;border-radius:14px;padding:12px;margin:0}
+  legend{padding:0 6px;color:var(--muted)}
+  label{display:block;margin-bottom:8px}
+  .row{display:grid;gap:12px}
+  @media (min-width:560px){.row{grid-template-columns:1fr 1fr}}
+  input[type="text"], textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #243144;background:#0f1620;color:var(--fg)}
+  textarea{min-height:90px}
+  .range{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px}
+  input[type="range"]{width:100%}
+  .scale{display:flex;justify-content:space-between;color:var(--muted);font-size:.88rem;margin-top:6px}
+  .hint{color:var(--muted);font-size:.9rem}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+  button{cursor:pointer;border:0;border-radius:12px;padding:10px 14px;font-weight:600}
+  .primary{background:var(--accent);color:#07131f}
+  .ghost{background:transparent;color:var(--muted);border:1px solid #2a384e}
+  .status{display:none;margin-top:10px;padding:10px;border-radius:10px}
+  .status.ok{display:block;background:rgba(56,176,0,.12);border:1px solid rgba(56,176,0,.35)}
+  .status.warn{display:block;background:rgba(255,183,3,.12);border:1px solid rgba(255,183,3,.35)}
+  .footer{margin-top:10px;color:var(--muted);font-size:.85rem;text-align:center}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <section class="card">
+    <h1>How was today’s practical?</h1>
+    <p class="lead">30-second, anonymous check-in. Your answers help improve the next session.</p>
+
+    <form id="f">
+      <input type="hidden" name="timestamp" id="ts" />
+      <div class="row">
+        <label>Group / lab (optional)
+          <input name="group" type="text" placeholder="e.g., Lab B, Monday 10:00" />
+        </label>
+        <label>Topic (optional)
+          <input name="topic" type="text" placeholder="e.g., Composite restoration" />
+        </label>
+      </div>
+
+      <fieldset>
+        <legend>Did you have fun?</legend>
+        <div class="range">
+          <label for="fun">Rate fun (1–10)</label>
+          <output id="funout">5</output>
+        </div>
+        <input id="fun" name="fun" type="range" min="1" max="10" step="1" value="5" oninput="funout.value=this.value" />
+        <div class="scale"><span>1 = not at all</span><span>10 = a lot</span></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>How much did you learn?</legend>
+        <div class="range">
+          <label for="learn">Learning (1–10)</label>
+          <output id="learnout">5</output>
+        </div>
+        <input id="learn" name="learn" type="range" min="1" max="10" step="1" value="5" oninput="learnout.value=this.value" />
+        <div class="scale"><span>1 = nothing</span><span>10 = a lot</span></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>How well prepared were you?</legend>
+        <div class="range">
+          <label for="prep">Preparedness (1–10)</label>
+          <output id="prepout">5</output>
+        </div>
+        <input id="prep" name="prep" type="range" min="1" max="10" step="1" value="5" oninput="prepout.value=this.value" />
+        <div class="scale"><span>1 = not at all</span><span>10 = fully</span></div>
+      </fieldset>
+
+      <label>What worked well? What should we change? (optional)
+        <textarea name="comments" placeholder="Short note…"></textarea>
+      </label>
+
+      <label class="hint">
+        <input type="checkbox" name="followup_ok" value="yes" /> I’m OK if you discuss anonymized quotes in class.
+      </label>
+
+      <div class="actions">
+        <button class="primary" type="submit">Send feedback</button>
+        <button class="ghost" type="button" id="resetBtn">Reset</button>
+      </div>
+
+      <div id="status" class="status" role="status"></div>
+    </form>
+
+    <section id="charts" style="display:none;margin-top:14px">
+      <h2 style="font-size:1.1rem;margin:8px 0 6px">Live results (includes your response)</h2>
+      <div id="chart-fun" class="card" style="padding:12px;margin:10px 0"></div>
+      <div id="chart-learn" class="card" style="padding:12px;margin:10px 0"></div>
+      <div id="chart-prep" class="card" style="padding:12px;margin:10px 0"></div>
+    </section>
+
+    <div class="footer">Takes ~30 seconds. No login. No personal data collected.</div>
+  </section>
+</main>
+
+<script>
+/*** CONFIG ***/
+const ENDPOINT = "https://script.google.com/macros/s/AKfycbxFLgm4evuSYmOxn_qdwtejF0prG5NJNZMAK4Ss6l_pDJJYbvy3viwHlMZZeCaHZGJRuw/exec"
+
+/*** HELPERS ***/
+const form = document.getElementById('f');
+const statusBox = document.getElementById('status');
+const resetBtn = document.getElementById('resetBtn');
+function setTs(){ document.getElementById('ts').value = new Date().toISOString(); }
+function showStatus(msg, ok=true){ statusBox.textContent = msg; statusBox.className = 'status ' + (ok?'ok':'warn'); }
+
+/*** INIT ***/
+setTs();
+resetBtn.addEventListener('click', () => { form.reset(); setTs(); showStatus('Form reset.'); });
+
+/*** SUBMIT ***/
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  setTs();
+  if(!/^https?:\\/\\//.test(ENDPOINT)) { showStatus('Missing ENDPOINT (Web App URL).', false); return; }
+  const payload = Object.fromEntries(new FormData(form).entries());
+  ['fun','learn','prep'].forEach(k=>{ if(payload[k]) payload[k]=parseInt(payload[k],10); });
+
+  try{
+    // Use text/plain to avoid CORS preflight with Apps Script
+    const res = await fetch(ENDPOINT, {
+      method:'POST',
+      headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    if(!res.ok) throw new Error('Network not ok: '+res.status);
+    await res.json().catch(()=>({ok:true}));
+    showStatus('Thanks! Feedback received.');
+    await refreshCharts(payload);
+    form.reset(); setTs();
+  }catch(err){
+    console.error(err);
+    showStatus('Submit failed. Check ENDPOINT or script deployment.', false);
+  }
+});
+
+/*** CHARTS ***/
+async function refreshCharts(my){
+  try{
+    const r = await fetch(ENDPOINT + '?mode=summary');
+    const json = await r.json();
+    if(!json || !json.ok) throw new Error('Bad summary');
+    const { fun_counts, learn_counts, prep_counts } = json;
+    document.getElementById('charts').style.display = 'block';
+    renderHistogram('chart-fun', fun_counts, my.fun, 'Did you have fun?');
+    renderHistogram('chart-learn', learn_counts, my.learn, 'How much did you learn?');
+    renderHistogram('chart-prep', prep_counts, my.prep, 'How well prepared were you?');
+  }catch(e){
+    console.error(e);
+    showStatus('Saved, but live results failed to load.', false);
+  }
+}
+
+function renderHistogram(id, counts, myValue, title){
+  const el = document.getElementById(id);
+  el.innerHTML = '';
+  const max = Math.max(1, ...counts);
+  const W = el.clientWidth || 640, H = 180, pad = 28, nb = counts.length;
+  const bw = (W - pad*2) / nb - 6;
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.setAttribute('width','100%'); svg.setAttribute('height',H);
+
+  const t = document.createElementNS(svgNS,'text');
+  t.setAttribute('x', pad); t.setAttribute('y', 18); t.setAttribute('font-size','14');
+  t.textContent = title; svg.appendChild(t);
+
+  const axis = document.createElementNS(svgNS,'line');
+  axis.setAttribute('x1', pad); axis.setAttribute('y1', H-30);
+  axis.setAttribute('x2', W-pad); axis.setAttribute('y2', H-30);
+  axis.setAttribute('stroke', '#2a384e'); svg.appendChild(axis);
+
+  counts.forEach((c, i) => {
+    const x = pad + i*(bw+6) + 3;
+    const h = Math.round(((H-60) * c) / max);
+    const y = H-30 - h;
+    const rect = document.createElementNS(svgNS,'rect');
+    rect.setAttribute('x', x); rect.setAttribute('y', y);
+    rect.setAttribute('width', bw); rect.setAttribute('height', h);
+    rect.setAttribute('fill', (i+1)===Number(myValue) ? '#4ba3ff' : '#6b7e97');
+    rect.setAttribute('rx','6'); rect.setAttribute('ry','6');
+    svg.appendChild(rect);
+
+    const lbl = document.createElementNS(svgNS,'text');
+    lbl.setAttribute('x', x + bw/2); lbl.setAttribute('y', H-12);
+    lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('font-size','12'); lbl.setAttribute('fill','#9ab');
+    lbl.textContent = String(i+1); svg.appendChild(lbl);
+
+    if(c>0){
+      const val = document.createElementNS(svgNS,'text');
+      val.setAttribute('x', x + bw/2); val.setAttribute('y', y-6);
+      val.setAttribute('text-anchor','middle'); val.setAttribute('font-size','11'); val.setAttribute('fill','#cfe6ff');
+      val.textContent = c; svg.appendChild(val);
+    }
+  });
+
+  el.appendChild(svg);
+}
+</script>
+</body>
+</html>
